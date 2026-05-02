@@ -126,5 +126,5 @@ URLs principais:
   ficam fora do versionamento.
 - O frontend usa proxy do Vite para encaminhar chamadas `/tarefas` para
   `http://localhost:8080`.
-- O script SQL de referencia esta em
-  `poc-dnd/back/api-tasks/src/main/java/school/sptech/api_tasks/schema/`.
+- A modelagem e os scripts de banco devem ficar no repositorio
+  `Desbravadores-Banco-De-Dados`.
