@@ -1,0 +1,12 @@
+{
+  "name": "poc-dnd",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:back\" \"npm run dev:front\"",
+    "dev:back": "cd back/api-tasks && mvnw.cmd spring-boot:run",
+    "dev:front": "cd front/kanban-ui && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
