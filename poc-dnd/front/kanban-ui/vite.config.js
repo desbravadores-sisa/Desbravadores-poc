@@ -9,6 +9,10 @@ export default defineConfig({
       "/tarefas": {
         target: "http://localhost:8080",
         changeOrigin: true
+      },
+      "/usuarios": {
+        target: "http://localhost:8080",
+        changeOrigin: true
       }
     }
   }

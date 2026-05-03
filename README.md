@@ -12,14 +12,15 @@ repositorio `Desbravadores-BackEnd-Java`, dentro da pasta `APIDesbravadores`.
 poc-dnd/
   back/api-tasks/       API Spring Boot experimental de tarefas
   front/kanban-ui/      Interface Kanban em React/Vite
-  package.json          Scripts para executar front e back juntos
+  package.json          Scripts para executar o front da POC
 ```
 
 ## Objetivo
 
 - Provar o fluxo visual de tarefas em Kanban.
+- Reaproveitar a experiencia visual da SPA `Tigre da Montanha`.
 - Testar drag and drop com `@dnd-kit`.
-- Validar chamadas entre frontend React e uma API de tarefas.
+- Validar login e Kanban consumindo a `APIDesbravadores`.
 - Servir como referencia para a integracao dos endpoints de tarefas no backend
   principal.
 
@@ -42,6 +43,8 @@ poc-dnd/
 - Quadro com as colunas `A fazer`, `Em andamento`, `Em revisao` e
   `Concluido`.
 - Drag and drop no front com chamada para persistir a mudanca de status.
+- Login via `POST /usuarios/login` antes de acessar o Kanban.
+- Logoff via `POST /usuarios/logoff`.
 
 ## Configuracao local
 
@@ -87,35 +90,41 @@ npm install
 
 ## Como executar
 
-Para iniciar front e back em paralelo:
+Antes de iniciar o front, execute a API oficial em outro terminal:
+
+```bash
+cd ../Desbravadores-BackEnd-Java/APIDesbravadores
+./mvnw.cmd spring-boot:run
+```
+
+Depois inicie a POC:
 
 ```bash
 cd poc-dnd
 npm run dev
 ```
 
-Tambem e possivel executar separadamente:
+Tambem e possivel executar apenas o front diretamente:
 
 ```bash
-# Backend experimental
-cd poc-dnd/back/api-tasks
-./mvnw.cmd spring-boot:run
-
-# Frontend
 cd poc-dnd/front/kanban-ui
 npm run dev
 ```
 
+O backend experimental antigo ainda pode ser iniciado com `npm run dev:back`,
+mas ele nao possui os endpoints de usuarios usados pelo login da SPA.
+
 URLs:
 
 - Frontend: `http://localhost:5173`
-- API experimental: `http://localhost:8080`
+- API oficial esperada pelo proxy: `http://localhost:8080`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
-- Console H2: `http://localhost:8080/h2-console`
 
-## Endpoints da POC
+## Endpoints usados pela POC
 
 ```http
+POST   /usuarios/login
+POST   /usuarios/logoff
 POST   /tarefas
 GET    /tarefas
 GET    /tarefas/{id}
@@ -139,7 +148,7 @@ Desbravadores-Banco-De-Dados
 
 - `node_modules`, `dist`, `target`, `.env` e arquivos locais de configuracao
   ficam fora do versionamento.
-- O frontend usa proxy do Vite para encaminhar chamadas `/tarefas` para
-  `http://localhost:8080`.
+- O frontend usa proxy do Vite para encaminhar chamadas `/usuarios` e
+  `/tarefas` para `http://localhost:8080`.
 - Mudancas definitivas de backend devem ser feitas na `APIDesbravadores`, nao
   neste repositorio de POC.
