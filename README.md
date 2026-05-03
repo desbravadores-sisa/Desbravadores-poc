@@ -1,56 +1,59 @@
 # Desbravadores POC
 
-Prova de conceito para um quadro Kanban de tarefas do projeto Desbravadores.
-O projeto combina uma API Java/Spring Boot para gerenciamento de tarefas com
-uma interface React/Vite que permite arrastar tarefas entre colunas.
+Repositorio de prova de conceito para validar a experiencia de um quadro
+Kanban de tarefas do projeto Desbravadores.
+
+Este repositorio nao e o backend principal do sistema. A API oficial fica no
+repositorio `Desbravadores-BackEnd-Java`, dentro da pasta `APIDesbravadores`.
 
 ## Estrutura
 
 ```text
 poc-dnd/
-  back/api-tasks/       API Spring Boot das tarefas
-  front/kanban-ui/      Interface Kanban em React
+  back/api-tasks/       API Spring Boot experimental de tarefas
+  front/kanban-ui/      Interface Kanban em React/Vite
   package.json          Scripts para executar front e back juntos
 ```
+
+## Objetivo
+
+- Provar o fluxo visual de tarefas em Kanban.
+- Testar drag and drop com `@dnd-kit`.
+- Validar chamadas entre frontend React e uma API de tarefas.
+- Servir como referencia para a integracao dos endpoints de tarefas no backend
+  principal.
 
 ## Tecnologias
 
 - Java 21
 - Spring Boot 4
 - Spring Data JPA
-- H2 Database para execucao local
+- H2 para execucao local da POC
 - Springdoc OpenAPI/Swagger
 - React 19
 - Vite
-- @dnd-kit para drag and drop
+- `@dnd-kit`
 
-## Funcionalidades da POC
+## Funcionalidades
 
 - Criacao, consulta, atualizacao e remocao de tarefas.
-- Agrupamento das tarefas por status Kanban.
-- Atualizacao do status via endpoint dedicado.
-- Quadro Kanban com colunas: `A fazer`, `Em andamento`, `Em revisao` e
+- Agrupamento por status Kanban.
+- Atualizacao de status por endpoint dedicado.
+- Quadro com as colunas `A fazer`, `Em andamento`, `Em revisao` e
   `Concluido`.
-- Drag and drop no front com persistencia da mudanca de status na API.
-
-## Requisitos
-
-- Node.js
-- npm
-- Java 21
-- Maven, ou uso do wrapper `mvnw.cmd` incluido no backend
+- Drag and drop no front com chamada para persistir a mudanca de status.
 
 ## Configuracao local
 
-Arquivos de ambiente e configuracao local nao devem ser versionados. Caso seja
-necessario configurar credenciais ou parametros locais, crie os arquivos apenas
-na sua maquina.
+Arquivos de ambiente e configuracao local nao devem ser versionados.
 
-O backend usa `application.properties` em
-`poc-dnd/back/api-tasks/src/main/resources/` para a execucao local. Esse arquivo
-esta ignorado pelo Git para evitar envio acidental de configuracoes sensiveis.
+O backend da POC pode usar um `application.properties` local em:
 
-Exemplo de configuracao local para H2:
+```text
+poc-dnd/back/api-tasks/src/main/resources/application.properties
+```
+
+Esse arquivo fica fora do Git. Exemplo para H2 local:
 
 ```properties
 spring.application.name=api-tasks
@@ -68,7 +71,7 @@ spring.jpa.properties.hibernate.format_sql=true
 
 ## Instalacao
 
-Instale as dependencias do orquestrador da POC:
+Instale as dependencias do orquestrador:
 
 ```bash
 cd poc-dnd
@@ -91,10 +94,10 @@ cd poc-dnd
 npm run dev
 ```
 
-Tambem e possivel executar cada parte separadamente:
+Tambem e possivel executar separadamente:
 
 ```bash
-# Backend
+# Backend experimental
 cd poc-dnd/back/api-tasks
 ./mvnw.cmd spring-boot:run
 
@@ -103,22 +106,34 @@ cd poc-dnd/front/kanban-ui
 npm run dev
 ```
 
-URLs principais:
+URLs:
 
 - Frontend: `http://localhost:5173`
-- API: `http://localhost:8080`
+- API experimental: `http://localhost:8080`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Console H2: `http://localhost:8080/h2-console`
 
-## Endpoints principais
+## Endpoints da POC
 
-- `POST /tarefas` cria uma tarefa.
-- `GET /tarefas` lista tarefas.
-- `GET /tarefas/{id}` busca uma tarefa por ID.
-- `PUT /tarefas/{id}` atualiza uma tarefa.
-- `DELETE /tarefas/{id}` remove uma tarefa.
-- `PATCH /tarefas/{id}/status` altera o status Kanban.
-- `GET /tarefas/kanban` lista tarefas agrupadas por coluna.
+```http
+POST   /tarefas
+GET    /tarefas
+GET    /tarefas/{id}
+PUT    /tarefas/{id}
+DELETE /tarefas/{id}
+PATCH  /tarefas/{id}/status
+GET    /tarefas/kanban
+```
+
+## Banco de dados
+
+Este repositorio nao deve conter scripts, dumps ou modelagem de banco.
+
+A modelagem e os scripts atualizados ficam no repositorio:
+
+```text
+Desbravadores-Banco-De-Dados
+```
 
 ## Observacoes
 
@@ -126,5 +141,5 @@ URLs principais:
   ficam fora do versionamento.
 - O frontend usa proxy do Vite para encaminhar chamadas `/tarefas` para
   `http://localhost:8080`.
-- A modelagem e os scripts de banco devem ficar no repositorio
-  `Desbravadores-Banco-De-Dados`.
+- Mudancas definitivas de backend devem ser feitas na `APIDesbravadores`, nao
+  neste repositorio de POC.
