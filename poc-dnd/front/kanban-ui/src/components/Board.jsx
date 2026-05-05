@@ -8,6 +8,7 @@ import {
   useSensors
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
+import { updateTaskStatus } from "../services/api";
 import Card from "./Card";
 import Column from "./Column";
 
@@ -34,26 +35,6 @@ export default function Board({ columns, boardData, setBoardData }) {
       return accumulator;
     }, {});
   }, [boardData]);
-
-  async function updateTaskStatus(taskId, nextStatus) {
-    try {
-      const response = await fetch(`/tarefas/${taskId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          status: nextStatus
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Falha ao atualizar status da tarefa.");
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar status da tarefa:", error);
-    }
-  }
 
   function handleDragStart(event) {
     setActiveTask(tasksById[event.active.id] || null);
@@ -129,7 +110,11 @@ export default function Board({ columns, boardData, setBoardData }) {
       [destinationColumnId]: nextDestinationTasks
     }));
 
-    await updateTaskStatus(active.id, destinationColumnId);
+    try {
+      await updateTaskStatus(active.id, destinationColumnId);
+    } catch (error) {
+      console.error("Erro ao atualizar status da tarefa:", error);
+    }
   }
 
   return (

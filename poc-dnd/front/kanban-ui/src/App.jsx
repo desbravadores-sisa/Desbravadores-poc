@@ -1,70 +1,102 @@
-import { useEffect, useState } from "react";
-import Board from "./components/Board";
-
-const COLUMN_TITLES = ["A fazer", "Em andamento", "Em revisão", "Concluído"];
-const INITIAL_LOGIN = {
-  email: "",
-  senha: ""
-};
-
-function createEmptyBoard() {
-  return COLUMN_TITLES.reduce((accumulator, title) => {
-    accumulator[title] = [];
-    return accumulator;
-  }, {});
-}
-
-function normalizeBoardData(data = {}) {
-  return COLUMN_TITLES.reduce((accumulator, title) => {
-    accumulator[title] = Array.isArray(data[title]) ? data[title] : [];
-    return accumulator;
-  }, {});
-}
+import { useEffect, useMemo, useState } from "react";
+import AppShell from "./components/AppShell";
+import AuthPanel from "./components/AuthPanel";
+import CounselorDashboard from "./components/CounselorDashboard";
+import DirectorDashboard from "./components/DirectorDashboard";
+import {
+  DEFAULT_CLUBE_ID,
+  INITIAL_LOGIN,
+  INITIAL_REGISTER,
+  NOTIFICATION_TIMEOUT_MS
+} from "./constants";
+import {
+  getDirectorUnits,
+  getKanbanBoard,
+  loginUser,
+  logoffUser,
+  registerUser
+} from "./services/api";
+import { createEmptyBoard, normalizeBoardData } from "./utils/kanban";
+import { isValidRole, normalizeRole } from "./utils/auth";
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loginData, setLoginData] = useState(INITIAL_LOGIN);
-  const [authStatus, setAuthStatus] = useState({
-    type: "",
-    message: "",
-    detail: ""
-  });
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
+  const [authStatus, setAuthStatus] = useState({ type: "", message: "" });
   const [boardData, setBoardData] = useState(createEmptyBoard);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [loginData, setLoginData] = useState(INITIAL_LOGIN);
+  const [registerData, setRegisterData] = useState(INITIAL_REGISTER);
+  const [units, setUnits] = useState([]);
+
+  const currentRole = normalizeRole(currentUser?.tipoConta);
+  const totalTasks = useMemo(() => Object.values(boardData).flat().length, [boardData]);
 
   useEffect(() => {
     if (!currentUser) {
       return;
     }
 
-    async function loadKanban() {
-      setIsLoading(true);
-
-      try {
-        const response = await fetch("/tarefas/kanban");
-
-        if (response.status === 204) {
-          setBoardData(createEmptyBoard());
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error("Falha ao carregar tarefas do Kanban.");
-        }
-
-        const data = await response.json();
-        setBoardData(normalizeBoardData(data));
-      } catch (error) {
-        console.error("Erro ao buscar tarefas do Kanban:", error);
-        setBoardData(createEmptyBoard());
-      } finally {
-        setIsLoading(false);
-      }
+    if (currentRole === "DIRETOR") {
+      loadDirectorUnits();
+      return;
     }
 
-    loadKanban();
-  }, [currentUser]);
+    if (currentRole === "CONSELHEIRO") {
+      loadKanban();
+    }
+  }, [currentUser, currentRole]);
+
+  useEffect(() => {
+    if (!authStatus.message) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAuthStatus({ type: "", message: "" });
+    }, NOTIFICATION_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [authStatus.message]);
+
+  async function loadDirectorUnits() {
+    setIsLoading(true);
+
+    try {
+      const data = await getDirectorUnits();
+      setUnits(data || []);
+    } catch (error) {
+      if (error.status === 404) {
+        setUnits([]);
+      } else {
+        console.error("Erro ao buscar unidades:", error);
+        showStatus("error", "Nao foi possivel carregar o painel do diretor.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function loadKanban() {
+    setIsLoading(true);
+
+    try {
+      const data = await getKanbanBoard();
+      setBoardData(data ? normalizeBoardData(data) : createEmptyBoard());
+    } catch (error) {
+      console.error("Erro ao buscar tarefas do Kanban:", error);
+      setBoardData(createEmptyBoard());
+      showStatus("error", "Nao foi possivel carregar o Kanban.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function showStatus(type, message) {
+    setAuthStatus({ type, message });
+  }
 
   function handleLoginChange(event) {
     const { name, value } = event.target;
@@ -74,175 +106,151 @@ export default function App() {
     }));
   }
 
+  function handleRegisterChange(event) {
+    const { name, value } = event.target;
+    setRegisterData((currentRegister) => ({
+      ...currentRegister,
+      [name]: value
+    }));
+  }
+
+  function handleRoleChange(tipoConta) {
+    setRegisterData((currentRegister) => ({
+      ...currentRegister,
+      tipoConta
+    }));
+  }
+
+  function switchAuthMode(nextMode) {
+    setAuthMode(nextMode);
+    setAuthStatus({ type: "", message: "" });
+  }
+
   async function handleLogin(event) {
     event.preventDefault();
 
     if (!loginData.email || !loginData.senha) {
-      setAuthStatus({
-        type: "error",
-        message: "Preencha e-mail e senha.",
-        detail: "Os dois campos são obrigatórios para acessar o quadro."
-      });
+      showStatus("error", "Preencha e-mail e senha.");
       return;
     }
 
     setIsAuthenticating(true);
-    setAuthStatus({
-      type: "",
-      message: "",
-      detail: ""
-    });
+    setAuthStatus({ type: "", message: "" });
 
     try {
-      const response = await fetch("/usuarios/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify(loginData)
-      });
+      const data = await loginUser(loginData);
+      const role = normalizeRole(data.tipoConta);
 
-      if (!response.ok) {
-        throw new Error("E-mail ou senha inválidos.");
+      if (!isValidRole(role)) {
+        throw new Error("Tipo de conta sem tela configurada.");
       }
 
-      const data = await response.json();
-      setCurrentUser(data);
+      setCurrentUser({
+        ...data,
+        tipoConta: role
+      });
       setLoginData(INITIAL_LOGIN);
-      setAuthStatus({
-        type: "success",
-        message: "Acesso liberado.",
-        detail: `Bem-vindo, ${data.nome}.`
-      });
+      showStatus("success", `Bem-vindo, ${data.nome}.`);
     } catch (error) {
-      setAuthStatus({
-        type: "error",
-        message: "Não foi possível entrar.",
-        detail: error.message || "Verifique se a API está rodando."
-      });
+      showStatus("error", error.message || "Verifique se a API esta rodando.");
     } finally {
       setIsAuthenticating(false);
     }
   }
 
+  async function handleRegister(event) {
+    event.preventDefault();
+
+    const nome = registerData.nome.trim();
+    const email = registerData.email.trim();
+    const tipoConta = normalizeRole(registerData.tipoConta);
+
+    if (!nome || !email || !registerData.senha || !registerData.confirmarSenha) {
+      showStatus("error", "Preencha todos os campos do cadastro.");
+      return;
+    }
+
+    if (registerData.senha !== registerData.confirmarSenha) {
+      showStatus("error", "As senhas nao coincidem.");
+      return;
+    }
+
+    if (!isValidRole(tipoConta)) {
+      showStatus("error", "Selecione um tipo de conta valido.");
+      return;
+    }
+
+    setIsRegistering(true);
+    setAuthStatus({ type: "", message: "" });
+
+    try {
+      await registerUser({
+        nome,
+        email,
+        senha: registerData.senha,
+        tipoConta,
+        idClube: DEFAULT_CLUBE_ID
+      });
+
+      setRegisterData(INITIAL_REGISTER);
+      setLoginData({ email, senha: "" });
+      setAuthMode("login");
+      showStatus("success", "Conta criada. Entre com sua senha para continuar.");
+    } catch (error) {
+      showStatus("error", error.message || "Nao foi possivel criar a conta.");
+    } finally {
+      setIsRegistering(false);
+    }
+  }
+
   async function handleLogoff() {
     try {
-      await fetch("/usuarios/logoff", {
-        method: "POST",
-        credentials: "include"
-      });
+      await logoffUser();
     } catch (error) {
-      console.error("Erro ao encerrar sessão:", error);
+      console.error("Erro ao encerrar sessao:", error);
     } finally {
       setCurrentUser(null);
       setBoardData(createEmptyBoard());
-      setAuthStatus({
-        type: "success",
-        message: "Sessão encerrada.",
-        detail: "Entre novamente para voltar ao Kanban."
-      });
+      setUnits([]);
+      showStatus("success", "Sessao encerrada.");
     }
   }
 
   if (!currentUser) {
     return (
-      <main className="app-shell app-shell--center">
-        <div className="bg-canvas" />
-
-        <section className="auth-card glass">
-          <div className="brand-lockup">
-            <div className="brand-mark" aria-hidden="true">T</div>
-            <div>
-              <strong>Tigre da Montanha</strong>
-              <span>Clube de Desbravadores</span>
-            </div>
-          </div>
-
-          <h1>Bem-vindo</h1>
-          <p>Acesse o quadro Kanban de tarefas do clube.</p>
-
-          <form className="auth-form" onSubmit={handleLogin}>
-            <label>
-              <span>E-mail</span>
-              <input
-                name="email"
-                type="email"
-                value={loginData.email}
-                onChange={handleLoginChange}
-                placeholder="seu@email.com"
-              />
-            </label>
-
-            <label>
-              <span>Senha</span>
-              <input
-                name="senha"
-                type="password"
-                value={loginData.senha}
-                onChange={handleLoginChange}
-                placeholder="Digite sua senha"
-              />
-            </label>
-
-            <button className="btn-primary" type="submit" disabled={isAuthenticating}>
-              {isAuthenticating ? <span className="spinner" aria-hidden="true" /> : "Entrar"}
-            </button>
-          </form>
-
-          {authStatus.message ? (
-            <div className={`toast-inline toast-inline--${authStatus.type}`}>
-              <strong>{authStatus.message}</strong>
-              {authStatus.detail ? <span>{authStatus.detail}</span> : null}
-            </div>
-          ) : null}
-        </section>
-      </main>
+      <AuthPanel
+        authMode={authMode}
+        authStatus={authStatus}
+        isAuthenticating={isAuthenticating}
+        isRegistering={isRegistering}
+        loginData={loginData}
+        registerData={registerData}
+        onLogin={handleLogin}
+        onLoginChange={handleLoginChange}
+        onModeChange={switchAuthMode}
+        onRegister={handleRegister}
+        onRegisterChange={handleRegisterChange}
+        onRoleChange={handleRoleChange}
+      />
     );
   }
 
   return (
-    <main className="app-shell">
-      <div className="bg-canvas" />
-
-      <nav className="navbar">
-        <div className="nav-brand">
-          <span className="nav-brand__mark" aria-hidden="true">T</span>
-          Tigre da Montanha
-        </div>
-
-        <div className="nav-user">
-          <div className="nav-user-info">
-            <div className="nav-user-name">{currentUser.nome || "Usuário"}</div>
-            <div className="nav-user-role">{currentUser.tipoConta || "Sessão ativa"}</div>
-          </div>
-          <button className="btn-logoff" type="button" onClick={handleLogoff}>
-            Sair
-          </button>
-        </div>
-      </nav>
-
-      <header className="dash-header">
-        <div>
-          <h1>Quadro de Tarefas</h1>
-          <p>Arraste as tarefas entre as colunas para atualizar o Kanban.</p>
-        </div>
-
-        <div className="dash-summary glass-sm">
-          <span>{Object.values(boardData).flat().length}</span>
-          <strong>tarefas</strong>
-        </div>
-      </header>
-
-      {isLoading ? (
-        <div className="app__status glass">Carregando tarefas...</div>
+    <AppShell
+      authStatus={authStatus}
+      currentUser={currentUser}
+      onLogoff={handleLogoff}
+    >
+      {currentRole === "DIRETOR" ? (
+        <DirectorDashboard units={units} isLoading={isLoading} />
       ) : (
-        <Board
-          columns={COLUMN_TITLES}
+        <CounselorDashboard
           boardData={boardData}
+          isLoading={isLoading}
           setBoardData={setBoardData}
+          totalTasks={totalTasks}
         />
       )}
-    </main>
+    </AppShell>
   );
 }

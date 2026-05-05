@@ -2,10 +2,11 @@
   "name": "poc-dnd",
   "private": true,
   "scripts": {
-    "dev": "npm run dev:front",
-    "dev:back": "cd back/api-tasks && mvnw.cmd spring-boot:run",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:front\"",
+    "dev:api": "cd repos/Desbravadores-BackEnd-Java/APIDesbravadores && mvnw.cmd spring-boot:run",
     "dev:front": "cd front/kanban-ui && npm run dev",
-    "dev:legacy": "concurrently \"npm run dev:back\" \"npm run dev:front\""
+    "dev:legacy": "concurrently \"npm run dev:legacy-api\" \"npm run dev:front\"",
+    "dev:legacy-api": "cd back/api-tasks && mvnw.cmd spring-boot:run"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
