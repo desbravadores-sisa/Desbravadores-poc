@@ -13,6 +13,10 @@ export default defineConfig({
       "/usuarios": {
         target: "http://localhost:8080",
         changeOrigin: true
+      },
+      "/unidades": {
+        target: "http://localhost:8080",
+        changeOrigin: true
       }
     }
   }

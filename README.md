@@ -12,15 +12,16 @@ repositorio `Desbravadores-BackEnd-Java`, dentro da pasta `APIDesbravadores`.
 poc-dnd/
   back/api-tasks/       API Spring Boot experimental de tarefas
   front/kanban-ui/      Interface Kanban em React/Vite
-  package.json          Scripts para executar o front da POC
+  repos/                Submodules com backend oficial e banco
+  package.json          Scripts para executar front e API oficial juntos
 ```
 
 ## Objetivo
 
 - Provar o fluxo visual de tarefas em Kanban.
-- Reaproveitar a experiencia visual da SPA `Tigre da Montanha`.
+- Reaproveitar o fluxo da SPA Tigre da Montanha em React.
 - Testar drag and drop com `@dnd-kit`.
-- Validar login e Kanban consumindo a `APIDesbravadores`.
+- Validar login por perfil consumindo a `APIDesbravadores`.
 - Servir como referencia para a integracao dos endpoints de tarefas no backend
   principal.
 
@@ -35,6 +36,15 @@ poc-dnd/
 - Vite
 - `@dnd-kit`
 
+## Organizacao do front
+
+O front da POC separa responsabilidades em:
+
+- `src/services/api.js`: chamadas HTTP para a `APIDesbravadores`.
+- `src/utils/`: normalizacao de papeis, senha e dados do Kanban.
+- `src/components/`: telas e componentes visuais reutilizaveis.
+- `src/constants.js`: constantes compartilhadas do fluxo da POC.
+
 ## Funcionalidades
 
 - Criacao, consulta, atualizacao e remocao de tarefas.
@@ -43,7 +53,10 @@ poc-dnd/
 - Quadro com as colunas `A fazer`, `Em andamento`, `Em revisao` e
   `Concluido`.
 - Drag and drop no front com chamada para persistir a mudanca de status.
-- Login via `POST /usuarios/login` antes de acessar o Kanban.
+- Login via `POST /usuarios/login`.
+- Cadastro via `POST /usuarios/cadastro`.
+- Diretor acessa o painel de unidades.
+- Conselheiro acessa o quadro Kanban.
 - Logoff via `POST /usuarios/logoff`.
 
 ## Configuracao local
@@ -90,29 +103,36 @@ npm install
 
 ## Como executar
 
-Antes de iniciar o front, execute a API oficial em outro terminal:
+Depois de clonar, inicialize os submodules:
 
 ```bash
-cd ../Desbravadores-BackEnd-Java/APIDesbravadores
-./mvnw.cmd spring-boot:run
+git submodule update --init --recursive
 ```
 
-Depois inicie a POC:
+Configure o `.env` da API oficial em:
+
+```text
+poc-dnd/repos/Desbravadores-BackEnd-Java/APIDesbravadores/.env
+```
+
+Para iniciar o front e a API oficial em paralelo:
 
 ```bash
 cd poc-dnd
 npm run dev
 ```
 
-Tambem e possivel executar apenas o front diretamente:
+Tambem e possivel executar separadamente:
 
 ```bash
+# API oficial
+cd poc-dnd/repos/Desbravadores-BackEnd-Java/APIDesbravadores
+./mvnw.cmd spring-boot:run
+
+# Frontend
 cd poc-dnd/front/kanban-ui
 npm run dev
 ```
-
-O backend experimental antigo ainda pode ser iniciado com `npm run dev:back`,
-mas ele nao possui os endpoints de usuarios usados pelo login da SPA.
 
 URLs:
 
@@ -124,7 +144,9 @@ URLs:
 
 ```http
 POST   /usuarios/login
+POST   /usuarios/cadastro
 POST   /usuarios/logoff
+GET    /unidades/diretor
 POST   /tarefas
 GET    /tarefas
 GET    /tarefas/{id}
@@ -136,19 +158,19 @@ GET    /tarefas/kanban
 
 ## Banco de dados
 
-Este repositorio nao deve conter scripts, dumps ou modelagem de banco.
-
-A modelagem e os scripts atualizados ficam no repositorio:
+Este repositorio referencia o banco oficial por submodule:
 
 ```text
-Desbravadores-Banco-De-Dados
+poc-dnd/repos/Desbravadores-Banco-De-Dados
 ```
 
 ## Observacoes
 
 - `node_modules`, `dist`, `target`, `.env` e arquivos locais de configuracao
   ficam fora do versionamento.
-- O frontend usa proxy do Vite para encaminhar chamadas `/usuarios` e
-  `/tarefas` para `http://localhost:8080`.
+- O frontend usa proxy do Vite para encaminhar chamadas `/usuarios`,
+  `/unidades` e `/tarefas` para `http://localhost:8080`.
 - Mudancas definitivas de backend devem ser feitas na `APIDesbravadores`, nao
   neste repositorio de POC.
+- A API experimental antiga ainda existe em `poc-dnd/back/api-tasks` e pode ser
+  executada com `npm run dev:legacy`.

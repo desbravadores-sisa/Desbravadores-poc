@@ -1,0 +1,6 @@
+[submodule "poc-dnd/repos/Desbravadores-Banco-De-Dados"]
+	path = poc-dnd/repos/Desbravadores-Banco-De-Dados
+	url = https://github.com/desbravadores-sisa/Desbravadores-Banco-De-Dados.git
+[submodule "poc-dnd/repos/Desbravadores-BackEnd-Java"]
+	path = poc-dnd/repos/Desbravadores-BackEnd-Java
+	url = https://github.com/desbravadores-sisa/Desbravadores-BackEnd-Java.git
