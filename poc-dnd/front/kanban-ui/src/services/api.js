@@ -49,6 +49,10 @@ export function getDirectorUnits() {
   return request("/unidades/diretor");
 }
 
+export function getCounselorUnit() {
+  return request("/unidades/conselheiro");
+}
+
 export function getKanbanBoard() {
   return request("/tarefas/kanban");
 }

@@ -56,7 +56,7 @@ O front da POC separa responsabilidades em:
 - Login via `POST /usuarios/login`.
 - Cadastro via `POST /usuarios/cadastro`.
 - Diretor acessa o painel de unidades.
-- Conselheiro acessa o quadro Kanban.
+- Conselheiro acessa o quadro Kanban com sua unidade identificada no topo.
 - Logoff via `POST /usuarios/logoff`.
 
 ## Configuracao local

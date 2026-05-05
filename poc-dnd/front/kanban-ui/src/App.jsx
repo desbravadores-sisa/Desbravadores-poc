@@ -10,6 +10,7 @@ import {
   NOTIFICATION_TIMEOUT_MS
 } from "./constants";
 import {
+  getCounselorUnit,
   getDirectorUnits,
   getKanbanBoard,
   loginUser,
@@ -29,6 +30,7 @@ export default function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [loginData, setLoginData] = useState(INITIAL_LOGIN);
   const [registerData, setRegisterData] = useState(INITIAL_REGISTER);
+  const [counselorUnit, setCounselorUnit] = useState(null);
   const [units, setUnits] = useState([]);
 
   const currentRole = normalizeRole(currentUser?.tipoConta);
@@ -45,7 +47,7 @@ export default function App() {
     }
 
     if (currentRole === "CONSELHEIRO") {
-      loadKanban();
+      loadCounselorWorkspace();
     }
   }, [currentUser, currentRole]);
 
@@ -79,16 +81,21 @@ export default function App() {
     }
   }
 
-  async function loadKanban() {
+  async function loadCounselorWorkspace() {
     setIsLoading(true);
 
     try {
-      const data = await getKanbanBoard();
-      setBoardData(data ? normalizeBoardData(data) : createEmptyBoard());
+      const [unit, board] = await Promise.all([
+        getCounselorUnit(),
+        getKanbanBoard()
+      ]);
+      setCounselorUnit(unit);
+      setBoardData(board ? normalizeBoardData(board) : createEmptyBoard());
     } catch (error) {
-      console.error("Erro ao buscar tarefas do Kanban:", error);
+      console.error("Erro ao carregar area do conselheiro:", error);
+      setCounselorUnit(null);
       setBoardData(createEmptyBoard());
-      showStatus("error", "Nao foi possivel carregar o Kanban.");
+      showStatus("error", "Nao foi possivel carregar a unidade do conselheiro.");
     } finally {
       setIsLoading(false);
     }
@@ -211,6 +218,7 @@ export default function App() {
     } finally {
       setCurrentUser(null);
       setBoardData(createEmptyBoard());
+      setCounselorUnit(null);
       setUnits([]);
       showStatus("success", "Sessao encerrada.");
     }
@@ -246,6 +254,7 @@ export default function App() {
       ) : (
         <CounselorDashboard
           boardData={boardData}
+          counselorUnit={counselorUnit}
           isLoading={isLoading}
           setBoardData={setBoardData}
           totalTasks={totalTasks}
