@@ -117,16 +117,17 @@ button {
   height: 38px;
   border: 1px solid rgba(255, 140, 0, 0.55);
   color: #ff8c00;
+  font-size: 20px;
   font-weight: 900;
   clip-path: polygon(50% 0, 100% 86%, 0 86%);
-  padding-top: 7px;
+  padding-top: 5px;
 }
 
 .brand-mark--small {
   width: 30px;
   height: 30px;
-  font-size: 12px;
-  padding-top: 5px;
+  font-size: 15px;
+  padding-top: 4px;
 }
 
 .auth-panel h1,

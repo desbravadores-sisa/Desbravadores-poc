@@ -5,7 +5,7 @@ export default function AppShell({ authStatus, children, currentUser, onLogoff }
     <main className="app">
       <nav className="topbar">
         <div className="topbar__brand">
-          <span className="brand-mark brand-mark--small" aria-hidden="true">T</span>
+          <span className="brand-mark brand-mark--small" aria-hidden="true">🐯</span>
           Tigre da Montanha
         </div>
 

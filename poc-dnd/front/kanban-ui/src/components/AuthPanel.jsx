@@ -22,7 +22,7 @@ export default function AuthPanel({
     <main className="app app--center">
       <section className="auth-panel">
         <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">T</div>
+          <div className="brand-mark" aria-hidden="true">🐯</div>
           <div>
             <strong>Tigre da Montanha</strong>
             <span>Clube de Desbravadores</span>
